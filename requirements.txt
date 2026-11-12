@@ -1,0 +1,20 @@
+# 판정 서버
+fastapi
+uvicorn
+pydantic
+requests
+pandas
+numpy
+scikit-learn
+
+# RAG 서버 (law_rag)
+openai
+pinecone
+rank_bm25
+kiwipiepy
+python-dotenv
+
+# 시연용 PC 음성 (pc_tts.py, 선택)
+pyttsx3
+edge-tts
+pygame

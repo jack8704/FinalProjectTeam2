@@ -1,0 +1,44 @@
+# 키·비밀 정보
+.env
+*.env
+
+# 실행 로그 (실행하면 다시 생김)
+signals.csv
+guidance.csv
+rag_latency.csv
+server_log*.txt
+
+# 원본·대용량 데이터 (README에 출처 표기)
+data/raw/
+data/불법주정차*.csv
+data/서울시*.csv
+law_rag/law_rag/data/*.doc
+
+# 개인 확인용·구버전·백업
+check_files.py
+pc_tts.py
+simulate.py
+codriver_all_cases_v3.gpx
+예측모델 포함_백업용_나중에 삭제 해도됨/
+AndroidStudioProjects/
+
+# 수업용 Django (별도 관리)
+server/
+
+# Android 빌드 산출물·PC별 설정
+android/build/
+android/app/build/
+android/.gradle/
+android/.kotlin/
+android/.idea/
+android/local.properties
+android/*.gpx
+*.apk
+
+# 자동 생성 파일
+__pycache__/
+*.pyc
+.vscode/
+.venv/
+.ipynb_checkpoints/
+*.sqlite3
