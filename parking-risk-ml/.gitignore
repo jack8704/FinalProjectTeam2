@@ -1,0 +1,11 @@
+data/
+*.parquet
+*.txt
+!requirements.txt
+model_compare_*.png
+model_compare_*.csv
+__pycache__/
+*.pyc
+.venv/
+.env
+.ipynb_checkpoints/
