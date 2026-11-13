@@ -51,6 +51,7 @@
 | `simulate_case1.py`, `check_risk_spot.py`, `find_near.py` | 시험 도구 |
 | `*.gpx` | 에뮬레이터 시연 경로 |
 | `android/` | 차량 앱 SoloM (Kotlin) — 신호 수집, 서버 통신, Pleos TTS 음성 안내 |
+| `docs/` | 발표자료 (PDF) |
 
 ---
 
@@ -109,7 +110,7 @@ uvicorn server:app --host 0.0.0.0 --port 8000
 
 ### 5. 앱 설치·실행
 ```bat
-adb install SoloM-v1.0.apk
+adb install solom_solom_release.apk
 ```
 - APK는 [GitHub Release v1.0](https://github.com/jack8704/FinalProjectTeam2/releases/tag/v1.0)에서 받습니다.
 - 에뮬레이터 앱 목록에서 **SoloM** 실행 → 권한 허용 (위 "필요한 설정" 4)
