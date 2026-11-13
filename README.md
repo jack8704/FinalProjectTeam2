@@ -5,6 +5,11 @@
 
 > 현대자동차그룹 Pleos Playground 차량용 앱 개발 공모전 출품작
 
+| 항목 | 링크 |
+|---|---|
+| 시연 영상 | https://youtu.be/uHOdaeCrt6Y |
+| APK (release) | [GitHub Release v1.0](https://github.com/jack8704/FinalProjectTeam2/releases/tag/v1.0) |
+
 ---
 
 ## 핵심 기능
@@ -12,9 +17,9 @@
 | 상황 | 감지 조건 | 안내 예시 |
 |---|---|---|
 | 우회전 횡단보도 (Case 1) | 내비 우회전 100m 이내 + 우측 깜빡이 + 회전 지점 횡단보도 50m 이내 | "빨간불이면 정지선에서 멈추고, 보행자가 없을 때 우회전하세요" |
-| 소화전 주정차 (A7) | 주행 후 기어 P 2초 유지 + 소화전 5m 이내 | "금지입니다. 소화전 주변 5미터 이내에서의 주정차는 금지됩니다." |
-| 횡단보도 주정차 (A10) | 기어 P 2초 + 횡단보도 10m 이내 | "금지입니다. 횡단보도 주변에서는 정차하거나 주차할 수 없습니다." |
-| 버스정류장 주정차 (A9) | 기어 P 2초 + 버스정류장 10m 이내 | "금지입니다. 버스정류장 주변에서는 주정차가 금지됩니다." |
+| 소화전 주정차 (A7) | 주행 후 기어 P 2초 유지 + 소화전 5m 이내 | "금지입니다. 소화전 5미터 안에는 세울 수 없습니다." |
+| 횡단보도 주정차 (A10) | 기어 P 2초 + 횡단보도 10m 이내 | "금지입니다. 횡단보도 10미터 안에는 세울 수 없습니다." |
+| 버스정류장 주정차 (A9) | 기어 P 2초 + 버스정류장 10m 이내 | "금지입니다. 버스정류장 10미터 안에는 세울 수 없습니다." |
 | 주정차 단속·신고 예상 지역 | 정차 + 위 시설 해당 없음 + 예측 등급 '상' (서울) | 단속·신고 다발 구역 안내 (고정 문구) |
 
 - **GPS 오차 반영:** 위치 정확도에 따라 확정 / 가능성 / 판정 보류 3단계로 표현하고, 확실하지 않으면 단정하지 않습니다.
@@ -39,12 +44,37 @@
 | `risk_lookup.py` | 주정차 단속·신고 위험도 조회 (100m 격자 × 요일 × 시간) |
 | `facility.py` | 시설 위치 DB (횡단보도·소화전·버스정류장, 약 29.8만 곳) |
 | `prepare_facilities.py`, `prepare_busstop.py` | 공공데이터 원본 → 판정용 시설 CSV 정제 |
-| `data/` | 판정용 시설 CSV, 위험 예측 결과(JSON), 예측 모델 노트북 |
+| `data/` | 판정용 시설 CSV, 위험 예측 결과(`enforce_2026.json` 단속, `report_2026.json` 신고) |
+| `model/` | 주정차 위험 예측 모델 학습·예측 코드 (LightGBM) |
 | `law_rag/law_rag/` | 도로교통법 RAG 서버 (하이브리드 검색 + 답변 검증) |
 | `navi_mock.py` | **모의 TBT 입력** (시연용, 아래 고지 참고) |
 | `simulate_case1.py`, `check_risk_spot.py`, `find_near.py` | 시험 도구 |
 | `*.gpx` | 에뮬레이터 시연 경로 |
 | `android/` | 차량 앱 SoloM (Kotlin) — 신호 수집, 서버 통신, Pleos TTS 음성 안내 |
+
+---
+
+## 테스트 환경
+
+| 항목 | 내용 |
+|---|---|
+| 에뮬레이터 | **Pleos Connect v2.1.0** (Android 14 · API 34 · x86_64) |
+| 화면 규격 | **2560 × 1440 px, 160 dpi** |
+| 앱 빌드 | release APK, minSdk 28 · targetSdk 37 |
+| 서버 PC | Windows, Python (Anaconda) |
+| 앱 → 서버 주소 | `http://10.0.2.2:8000` (에뮬레이터에서 본 실행 PC 자신) |
+
+### 필요한 설정
+1. `law_rag/law_rag/.env`에 API 키 입력 (아래 실행 방법 2)
+2. RAG 서버(:8001) → 판정 서버(:8000) 순서로 먼저 실행
+3. 서버는 **에뮬레이터를 실행하는 PC**에서 띄웁니다. 다른 PC에서 띄우면 포트 연결(port proxy) 설정이 필요합니다.
+4. 앱 첫 실행 시 위치·알림 권한을 허용합니다. 권한 창이 뜨지 않으면 adb로 허용합니다. (Pleos 에뮬레이터의 운전자 계정 = user 10)
+```bat
+adb shell pm grant --user 10 com.aixlab.app android.permission.ACCESS_FINE_LOCATION
+adb shell pm grant --user 10 com.aixlab.app android.permission.ACCESS_COARSE_LOCATION
+adb shell pm grant --user 10 com.aixlab.app android.permission.POST_NOTIFICATIONS
+```
+5. 위치는 에뮬레이터 **Extended controls → Location → Routes**에서 GPX 재생, 회전 정보(TBT)는 `navi_mock.py`로 입력합니다.
 
 ---
 
@@ -70,13 +100,21 @@ uvicorn rag_server:app --host 0.0.0.0 --port 8001
 
 ### 4. 판정 서버 실행 (포트 8000)
 ```bat
+cd 저장소 최상위 폴더
 set RAG_URL=http://127.0.0.1:8001
 set RISK_DEMO_TIME=0-9
 uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 - `RISK_DEMO_TIME`: 시연용 요일-시각 고정 (0-9 = 월요일 9시). 실제 운행 시에는 설정하지 않음
 
-### 5. 시연 보조
+### 5. 앱 설치·실행
+```bat
+adb install SoloM-v1.0.apk
+```
+- APK는 [GitHub Release v1.0](https://github.com/jack8704/FinalProjectTeam2/releases/tag/v1.0)에서 받습니다.
+- 에뮬레이터 앱 목록에서 **SoloM** 실행 → 권한 허용 (위 "필요한 설정" 4)
+
+### 6. 시연 보조
 ```bat
 python navi_mock.py codriver_all_cases_v4.gpx    # 모의 TBT 입력 (GPX 재생 전에 실행)
 ```
@@ -128,7 +166,8 @@ python navi_mock.py codriver_all_cases_v4.gpx    # 모의 TBT 입력 (GPX 재생
 
 **빌드**
 - Pleos SDK는 Pleos Playground Maven 저장소(`nexus-playground.pleos.ai`)에서 받습니다 (`settings.gradle.kts`에 설정).
-- 에뮬레이터에서 일부 권한은 adb로 허용해야 합니다 (위치, 알림, 차속).
+- 에뮬레이터에서 일부 권한은 adb로 허용해야 합니다 (위 "테스트 환경 → 필요한 설정" 4).
+- 제출 APK: release 빌드, [GitHub Release v1.0](https://github.com/jack8704/FinalProjectTeam2/releases/tag/v1.0)
 - 앱은 판정 서버(포트 8000)와 통신해야 안내가 나옵니다. 위 "실행 방법"대로 서버를 먼저 실행한 뒤 앱을 켜 주세요.
 - 서버 없이 앱만 실행하면 신호 수집은 동작하지만 음성 안내는 나오지 않습니다. 전체 동작은 시연 영상을 참고해 주세요.
 
@@ -140,7 +179,7 @@ python navi_mock.py codriver_all_cases_v4.gpx    # 모의 TBT 입력 (GPX 재생
 |---|---|
 | 차량 앱 | Kotlin, Pleos Vehicle SDK 2.3.2, NaviHelper SDK 3.0.5, Pleos TTS 3.3.1 |
 | 판정 서버 | Python, FastAPI |
-| RAG | Pinecone, BM25 하이브리드 검색, OpenAI |
+| RAG | Pinecone, BM25 하이브리드 검색, OpenAI — 도로교통법 조문을 먼저 검색해, 찾은 조문만 근거로 안내 문장을 생성 (RAG: 검색 증강 생성) |
 | 위험 예측 | LightGBM |
 
 ## 데이터 출처

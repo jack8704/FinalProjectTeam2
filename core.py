@@ -1,5 +1,5 @@
 # core.py — 모든 Case가 함께 쓰는 것: 최신 신호값, 시설 DB, 거리·GPS 계산, RAG 호출·안내 저장
-# ※ latest, SITU 는 다른 파일에서 '같은 객체'를 공유함 → 절대 latest = {} 처럼 새로 대입하지 말 것 (내용만 수정)
+# latest, SITU는 여러 파일이 같은 객체를 공유 (재대입 금지, 내용만 수정)
 from datetime import datetime
 import os, re, math, time, threading
 import requests                                              # RAG 서버 호출용
@@ -18,7 +18,7 @@ case_lock = threading.Lock()                                 # 판정은 한 번
 # ───────── Case → 팀 RAG 상황 코드·판정: 각 Case 파일이 자기 코드를 등록함 ─────────
 SITU = {}                                                    # 예: case1.py 에서 SITU.update({...})
  
-# ───────── [추가] 안내 저장소: TTS 앱이 /guidance 로 가져감 ─────────
+# ───────── 안내 저장소: SoloM 앱(GuidanceService)이 /guidance 로 가져감 ─────────
 guidance_log = []                                            # 최근 안내 목록
 guidance_id = 0                                              # 안내마다 1씩 증가하는 번호
 guidance_lock = threading.Lock()                             # 저장할 때 번호 겹침 방지
@@ -29,7 +29,7 @@ def push_guidance(case_id, text):
         guidance_id += 1
         guidance_log.append({"id": guidance_id, "code": case_id, "text": text, "ts": time.time()})
         del guidance_log[:-20]                               # 최근 20개만 보관
-        save_guidance(guidance_id, case_id, text)            # [추가 11/10] 파일에도 기록
+        save_guidance(guidance_id, case_id, text)            # 파일에도 기록
 
 def save_guidance(gid, case_id, text):                       # 안내 문구 기록 (TTS로 보낸 실제 문장)
     import csv
@@ -53,7 +53,7 @@ def haversine(lat1, lon1, lat2, lon2):                       # 두 좌표 사이
     a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
     return 2 * R * math.asin(math.sqrt(a))
  
-dist_m = haversine                                           # [정리] 같은 계산이라 이름만 연결 (잠금 해제 로직에서 사용)
+dist_m = haversine                                           # 같은 계산이라 이름만 연결 (잠금 해제 로직에서 사용)
  
 def bearing(lat1, lon1, lat2, lon2):                         # 1 → 2 방향 각도 (북=0, 동=90)
     p1, p2 = math.radians(lat1), math.radians(lat2)
@@ -65,13 +65,13 @@ def bearing(lat1, lon1, lat2, lon2):                         # 1 → 2 방향 �
 def angle_diff(a, b):                                        # 두 각도 차이 (0~180)
     return abs((a - b + 180) % 360 - 180)
  
-def gps_tier(dist, acc, limit):                              # GPS 오차 반영 3단계 (프로젝트 지침)
+def gps_tier(dist, acc, limit):                              # GPS 오차 반영 3단계
     if acc > 30:            return "판정 보류"                # 오차가 너무 큼
     if dist + acc <= limit: return "확정"                     # 오차를 더해도 기준 안
     if dist - acc <= limit: return "가능성"                   # 오차 범위에 걸침
     return "해당 없음"
  
-# ───────── [추가 11/10] 음성용 문장 다듬기 (RAG 응답은 그대로, TTS로 보내는 문장만 짧게) ─────────
+# ───────── 음성용 문장 다듬기 (RAG 응답은 그대로, TTS로 보내는 문장만 짧게) ─────────
 SPEAK_LAW = "short"                                          # 조문 읽기: "short" = "제25조"만 / "full" = "도로교통법 제25조" / "none" = 안 읽음
 SPEAK_VERDICT_CAUTION = False                                # False: 맨 앞 "주의하세요."는 읽지 않음 ("금지입니다."는 의미가 커서 유지)
 
@@ -86,10 +86,10 @@ def speech(text):
         t = t[len("주의하세요."):].strip()                     # 맨 앞 판정 단어 제거 → 한 문장으로
     return t
 
-# ───────── v1: 판정 → RAG 실시간 호출 → 안내 ─────────
+# ───────── 판정 → RAG 실시간 호출 → 안내 ─────────
 def rag_guidance(case_id, detail, push=True):               # push=False면 저장하지 않고 문구만 돌려줌
     code, verdict = SITU[case_id]
-    label = "Case 판정" if push else "미리 요청(아직 안 읽음)"   # [추가] 미리 판정용 요청은 판정 로그와 구분
+    label = "Case 판정" if push else "미리 요청(아직 안 읽음)"   # 미리 판정용 요청은 판정 로그와 구분
     print(f"\n[{datetime.now():%H:%M:%S}] {label}: {case_id} {detail} → RAG 요청: {code}/{verdict}")
     if not RAG_URL:
         print("    RAG_URL 없음 → 호출 생략"); return None
@@ -104,7 +104,7 @@ def rag_guidance(case_id, detail, push=True):               # push=False면 저�
         print(f"{'>>> [안내' if push else '    [준비 문구(아직 안 읽음)'} {case_id}] {speech(res.get('answer'))}")   # 실제로 읽는 문장
         print(f"    RAG 원문: {res.get('answer')}")                 # 판정 단어·조문 포함 원문 (근거 확인용)
         if push:
-            push_guidance(case_id, speech(res.get("answer")))   # TTS 앱이 가져갈 수 있게 저장 (괄호 조문 제외)
+            push_guidance(case_id, speech(res.get("answer")))   # 앱이 가져갈 수 있게 저장 (괄호 조문 제외)
         print(f"    근거: {res.get('references')}  (대체멘트 사용: {res.get('used_fallback')})")
         print(f"    소요: 전체 {sec:.2f}초 = 검색 {res.get('t_search')}초 + LLM {res.get('t_llm')}초 + 기타\n")
         latest["guidance"] = f"{case_id}|{res.get('answer')}|{sec:.2f}s"   # /latest 에서 확인 가능
@@ -119,7 +119,7 @@ def trigger(case_id, detail=""):
     # RAG 응답을 기다리는 동안 다른 신호 수신이 막히지 않도록 별도 스레드로 실행
     threading.Thread(target=rag_guidance, args=(case_id, detail), daemon=True).start()
 def trigger_group(items):
-    # 같은 순간에 나갈 안내 여러 개를 '한 번에' 저장 → TTS가 앞 안내를 끊지 않음 (BL-07)
+    # 같은 순간에 나갈 안내 여러 개를 '한 번에' 저장 → TTS가 앞 안내를 끊지 않음
     # items: [(case_id, detail), ...] 말할 순서대로
     def run():
         texts = [t for cid, d in items if (t := rag_guidance(cid, d, push=False))]   # 순서대로 문구 생성

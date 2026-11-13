@@ -1,7 +1,7 @@
 """
-서버 쪽 LLM 호출 (테스트·질의표준화·백업용)
+서버 쪽 LLM 호출 (안내 문장 생성·질의 표준화)
 
-실제 서비스 답변은 앱(Kotlin)이 서버가 준 prompt를 Gleo LLM SDK에 넣어 생성한다.
+안내 문장은 rag_server가 생성하고, 앱은 /guidance로 받아 Pleos TTS로 읽음.
 공급자 전환은 OpenAI SDK의 base_url·api_key만 바꾸는 방식 (수업 ch9_02~04)
   .env  LLM_PROVIDER=openai | upstage | ollama
 """

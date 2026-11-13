@@ -1,15 +1,9 @@
 """
-규칙엔진(3단계) ↔ RAG(4단계) 연결부
-
-역할 분담 (심사 방어 핵심)
-  - 금지/주의/가능 "판정"은 규칙엔진이 한다 (좌표·거리 계산 = 결정적, 재현 가능)
-  - RAG는 그 판정의 "법적 근거"를 찾아 설명만 한다 (LLM이 판정을 바꾸지 못하게 프롬프트로 고정)
-
-왜 상황별 '고정 근거 조문(anchor)'을 두나?
-  - 앱이 이미 상황을 안다면(예: 소화전 4m 앞 정차) 검색을 돌릴 필요가 없음 → 검색 실패 0%, 응답 빠름
-  - 검색은 보조 근거(관련 조문 추가)로만 사용
-
-⚠ anchor의 조문·키워드는 step5_situation.py --check 로 실제 원문에 있는지 반드시 확인할 것
+규칙엔진 판정 ↔ RAG 근거 설명 연결
+  - 금지/주의/가능 판정: 규칙엔진 (좌표·거리 계산)
+  - RAG: 판정의 법적 근거 설명 (판정은 프롬프트로 고정)
+  - 상황별 고정 근거 조문(anchor) + 보조 검색
+  - anchor 확인: step5_situation.py --check
 """
 from typing import Optional
 
@@ -24,7 +18,7 @@ SITUATIONS = {
         "query": "교차로에서 우회전할 때 횡단보도 보행자 보호 일시정지",
         "note": "신호 색깔별 우회전 방법(적색 신호 시 일시정지 등)은 시행규칙 별표에 있어 현재 미수록",
     },
-    # [추가] 우회전: 횡단보도 위치별로 안내 문구를 다르게 (point = LLM에 주는 안내 핵심)
+    # 우회전: 횡단보도 위치별로 안내 문구를 다르게 (point = LLM에 주는 안내 핵심)
     "right_turn_front": {
         "name": "교차로 우회전 - 전방(회전 전) 횡단보도",
         "anchors": [(25, 0, "우회전"), (27, 0, "횡단보도")],
@@ -41,7 +35,7 @@ SITUATIONS = {
         "query": "우회전 후 횡단보도 보행자 통행하려고 하는 때 일시정지",
         "note": "보행자 유무는 측정 불가 → 조건형 안내",
     },
-    "right_turn_both": {                                         # [추가] 전방·회전 후 횡단보도가 둘 다 있을 때 (신호 모름 → 둘 다 1번에 안내)
+    "right_turn_both": {                                         # 전방·회전 후 횡단보도가 둘 다 있을 때 (신호 모름 → 둘 다 1번에 안내)
         "name": "교차로 우회전 - 전방(회전 전)과 회전 후 횡단보도",
         "anchors": [(25, 0, "우회전"), (27, 0, "횡단보도")],
         "static": ["rt_red"],
@@ -111,7 +105,7 @@ SITUATIONS = {
 
 VERDICTS = ("금지", "주의", "가능")
 
-# [추가] 코퍼스에 없는 조문을 고정 청크로 넣음 (⚠ 국가법령정보센터 원문과 문구 대조 후 사용)
+# 코퍼스에 없는 조문을 고정 청크로 넣음 (국가법령정보센터 원문 대조)
 #   출처: 도로교통법 시행규칙 [별표 2] 차량신호등 적색의 등화 (2023.1.22. 시행)
 STATIC_CHUNKS = {
     "rt_red": {
@@ -158,9 +152,9 @@ def explain_situation(
     if verdict not in VERDICTS:
         raise ValueError(f"판정은 {VERDICTS} 중 하나여야 합니다: {verdict}")
     s = SITUATIONS[code]
-    extra_k = s.get("extra_k", extra_k)                  # 상황별 보조 검색 개수 (없으면 기존 값 1) — 동료 11/9 추가
+    extra_k = s.get("extra_k", extra_k)                  # 상황별 보조 검색 개수 (없으면 기존 값 1)
     anchors, missing = anchor_chunks(r, code, on)
-    anchors += [STATIC_CHUNKS[k] for k in s.get("static", [])]   # [추가] 고정 청크 (별표 등)
+    anchors += [STATIC_CHUNKS[k] for k in s.get("static", [])]   # 고정 청크 (별표 등)
     seen = {(c["law"], c["article"]) for c in anchors}
     anchor_cats = {cat for c in anchors for cat in c.get("category", [])}
     extra = [
@@ -180,6 +174,6 @@ def explain_situation(
         "extra": extra,
         "missing": missing,
         "note": s["note"],
-        "point": s.get("point", ""),                             # [추가] 안내 핵심 (위치별 문구 구분)
-        "guide": s.get("guide", ""),                             # 고정 안내 (기존 상황은 빈 문자열) — 동료 11/9 추가
+        "point": s.get("point", ""),                             # 안내 핵심 (위치별 문구 구분)
+        "guide": s.get("guide", ""),                             # 고정 안내 (기존 상황은 빈 문자열)
     }

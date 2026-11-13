@@ -79,7 +79,7 @@ def build_situation_prompt(sit: dict, on=None) -> str:
     """sit = situations.explain_situation() 결과"""
     chunks = sit["anchors"] + sit["extra"]
     facts = f"\n[측정 사실]\n{sit['facts']}" if sit["facts"] else ""
-    point = f"\n\n[안내 핵심]\n{sit['point']}" if sit.get("point") else ""   # [추가] 상황별로 꼭 말할 내용 (위치별 문구 구분)
+    point = f"\n\n[안내 핵심]\n{sit['point']}" if sit.get("point") else ""   # 상황별로 꼭 말할 내용 (위치별 문구 구분)
     return (
         f"{SYSTEM_SITUATION}\n\n[상황]\n{sit['name']}{point}\n\n[판정]\n{sit['verdict']}{facts}"
         f"\n\n[근거 조문]\n{build_context(chunks, on)}\n\n[설명]"

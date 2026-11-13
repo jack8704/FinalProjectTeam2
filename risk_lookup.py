@@ -1,6 +1,6 @@
 # risk_lookup.py — 주정차 단속·신고 위험도 조회 (case2.py에서 import 해서 사용)
 # 필요 파일 : 이 파일과 같은 폴더의 data/enforce_2026.json, data/report_2026.json
-# 격자 규칙 : 동료 모델 코드 step3_grid.py 기준 (키 = "경도칸_위도칸")
+# 격자 규칙 : 모델 코드 step3_grid.py 기준 (키 = "경도칸_위도칸")
 import json, datetime
 from pathlib import Path
 

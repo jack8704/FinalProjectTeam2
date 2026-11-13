@@ -20,7 +20,7 @@ def parse_one(law: dict, path) -> list:
         articles = [a for a in articles if a.label in law["include"]]
     chunks = make_chunks(articles, law, config.MAX_CHUNK_CHARS, base_date)
 
-    # ── 품질 점검 출력 (발표 자료에 그대로 쓸 수 있는 수치) ──
+    # ── 품질 점검 출력 ──
     alive = [a for a in articles if not a.deleted]
     lens = [len(c["text"]) for c in chunks]
     print(f"\n[{law['name']}]  원본: {path}")

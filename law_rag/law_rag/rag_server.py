@@ -1,4 +1,4 @@
-"""Co-Driver RAG 서버: server.py(8000)가 상황을 판정하면 호출 → 근거 조문 검색 + LLM 설명"""
+"""SoloM RAG 서버: server.py(8000)가 상황을 판정하면 호출 → 근거 조문 검색 + LLM 설명"""
 import sys, time
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -31,7 +31,7 @@ def _llm(prompt: str) -> str:
     from llm import chat                                         # 팀 llm.py (OPENAI_API_KEY 필요)
     return chat(prompt)
 
-@app.post("/situation")                                          # v1: 상황 판정 → RAG 설명
+@app.post("/situation")                                          # 상황 판정 → RAG 설명
 def situation(q: SituationReq):
     t = time.time()
     sit = explain_situation(R, q.code, q.verdict, q.facts)       # 고정 근거 + 보조 검색

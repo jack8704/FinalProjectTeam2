@@ -3,7 +3,7 @@
 import time, threading, os
 from core import latest, SITU, CW, HYD, BUS, case_lock, trigger_group, gps_tier, push_guidance
 
-# ★ 11/10 추가: 주정차 단속·신고 위험 예측 (동료 ML 결과, risk_lookup.py + data/*.json)
+# 주정차 단속·신고 위험 예측 (위험 예측 모델 결과, risk_lookup.py + data/*.json)
 try:
     import risk_lookup                                       # 같은 폴더의 risk_lookup.py
     if os.environ.get("RISK_DEMO_TIME"):                     # 시연용 요일-시 고정 (예: set RISK_DEMO_TIME=0-9 → 월요일 9시)
@@ -23,8 +23,8 @@ SITU.update({                                                # 이 Case가 쓰�
 })
 
 PARK_CONFIRM_SEC = 2                                         # P단이 2초 유지되면 정차 확정 (1~3초에서 조정)
-LOC_MAX_AGE = 10                                             # 위치가 10초보다 오래되면 판정 보류 (BL-03)
-ACC_HOLD    = 15                                             # GPS 오차 15m 이상이면 거리 판정 생략 (개발지침 3-2)
+LOC_MAX_AGE = 10                                             # 위치가 10초보다 오래되면 판정 보류
+ACC_HOLD    = 15                                             # GPS 오차 15m 이상이면 거리 판정 생략
 case2 = {"parked": False, "done": set(), "timer": None, "armed": False, "checked": None}   # 정차 확정 여부, 낸 안내, 확정 대기 타이머, 주행 이력
 MOVE_KMH = 5                                                # 이 속도를 넘게 달린 적이 있어야 다음 P단을 "주차"로 봄
 
@@ -32,7 +32,7 @@ def is_parking_now():                                        # 지금 P단 + 정
     return latest.get("gear") == "GEAR_PARK" and float(latest.get("speed_kmh") or 0) <= 5
 
 def judge_parking():                                         # 정차 확정 순간 1회 실행 → 안내할 (코드, 내용) 또는 None
-    case2["checked"] = None                                  # ★ 법규 판정을 끝까지 마쳤을 때만 위치를 남김 (보류면 None)
+    case2["checked"] = None                                  # 법규 판정을 끝까지 마쳤을 때만 위치를 남김 (보류면 None)
     loc = latest.get("location")                             # "위도,경도"
     ts = latest.get("loc_ts")                                # 위치를 받은 서버 시각
     if not loc or ts is None or time.time() - ts > LOC_MAX_AGE:
@@ -55,10 +55,10 @@ def judge_parking():                                         # 정차 확정 순
         if tier in ("확정", "가능성"):
             case2["done"].add(cid)
             return (cid, f"({f.get('road', '')} {name} {f.get('id')} {dist:.0f}m, GPS ±{acc:.0f}m → {tier})")   # 겹치면 1개만 (A7 > A10 > A9)
-    case2["checked"] = (lat, lon, acc)                       # ★ 금지 구역 아님이 '확인'된 위치 → 위험 예측에 사용
+    case2["checked"] = (lat, lon, acc)                       # 금지 구역 아님이 '확인'된 위치 → 위험 예측에 사용
     return None
 
-def judge_risk():                                            # ★ 11/10 추가: 금지 구역이 아닐 때만 단속·신고 위험 예측 조회
+def judge_risk():                                            # 금지 구역이 아닐 때만 단속·신고 위험 예측 조회
     if risk_lookup is None or not case2.get("checked"):      # 모듈 없음 또는 법규 판정이 보류됨(위치·오차) → 조회 안 함
         return None
     lat, lon, acc = case2["checked"]
@@ -79,7 +79,7 @@ def confirm_park():                                          # P단 진입 2초 
         if hit:                                              # 금지 구역이면 주정차 금지 안내 1건 (법규 우선)
             trigger_group([hit])
             return
-        risk = judge_risk()                                  # ★ 금지 구역 아님 → 단속·신고 위험 예측
+        risk = judge_risk()                                  # 금지 구역 아님 → 단속·신고 위험 예측
         if risk:                                             # '상' 등급 → LLM 없이 고정 문구 바로 안내 (빠름, 판정 아닌 예측이라 꾸밀 필요 없음)
             cid, msg = risk
             case2["done"].add(cid)

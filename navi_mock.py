@@ -1,9 +1,9 @@
 """navi_mock.py — 에뮬레이터 내비가 GPX를 따라가지 않아 TBT가 멈춰 있으므로, 내비 TBT만 대신 보냄 (시연·테스트용)
-  - 위치·방향·깜박이·기어는 에뮬레이터 GPX + Co-Driver 앱이 그대로 보냄
+  - 위치·방향·깜박이·기어는 에뮬레이터 GPX + SoloM 앱이 그대로 보냄
   - 이 스크립트는 /latest 의 현재 위치를 읽어 회전 지점까지 거리를 계산 → navi_next_turn 으로 전송
 사용법:  python navi_mock.py 경로.gpx   (GPX에서 회전 지점을 자동으로 찾음, GPX 재생 전에 먼저 실행, Ctrl+C로 종료)
          python navi_mock.py            (GPX 없이 실행 → 아래 TURNS 기본값 사용)
-⚠ 발표 시 'TBT 모의 입력'임을 밝힐 것 (실차에서는 실제 내비 TBT가 들어오는 구조)
+시연용 TBT 모의 입력 (실차는 내비 TBT 사용)
 """
 import sys, re, time, math, requests
 

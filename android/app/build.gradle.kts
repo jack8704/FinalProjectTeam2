@@ -22,7 +22,7 @@ android {
     buildTypes {
         release {
             optimization {
-                enable = true
+                enable = false   // R8 코드 축소 끔 (켜면 실행 직후 IllegalAccessError로 종료)
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }

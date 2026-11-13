@@ -44,7 +44,7 @@ LAWS = [
 MAX_CHUNK_CHARS = 500
 
 # ── 임베딩 공급자 ───────────────────────────────────────
-# pinecone : multilingual-e5-large (추가 키 불필요, 무료)  ← 기본값 (어제 쓰던 것)
+# pinecone : multilingual-e5-large (추가 키 불필요, 무료)  ← 기본값
 # upstage  : solar-embedding-2 (한국어 강점, UPSTAGE_API_KEY 필요)
 # openai   : text-embedding-3-small (OPENAI_API_KEY 필요)
 # ※ 공급자마다 차원이 달라 인덱스를 따로 만듦 (무료 플랜 인덱스 5개 제한 주의)
@@ -90,7 +90,7 @@ RERANK_MODE = os.getenv("RERANK_MODE", "none")
 USE_CATEGORY_FILTER = os.getenv("USE_CATEGORY_FILTER", "0") == "1"
 
 # ── LLM 공급자 (답변 생성·질의 표준화용, 선택) ─────────────
-# 실제 서비스 답변은 앱의 Gleo LLM이 생성. 서버 LLM은 테스트·질의표준화·백업용
+# 안내 문장 생성(rag_server)·질의 표준화에 사용
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # openai / upstage / ollama
 LLM_SPECS = {
     "openai": {

@@ -42,7 +42,7 @@ def receive_signal(s: Signal):
 def get_latest():
     return latest
  
-@app.get("/guidance")                                        # [추가] TTS 앱이 1초마다 호출: /guidance?after=마지막id
+@app.get("/guidance")                                        # SoloM 앱이 1초마다 호출: /guidance?after=마지막id
 def get_guidance(after: int = 0):
     return [g for g in guidance_log if g["id"] > after]      # after 번호보다 새 안내만 반환
  
@@ -53,4 +53,4 @@ def ask(q: str):
  
 @app.get("/")
 def root():
-    return {"status": "Co-Driver 서버 실행 중", "docs": "/docs", "rag": RAG_URL or "미설정"}
+    return {"status": "SoloM 서버 실행 중", "docs": "/docs", "rag": RAG_URL or "미설정"}

@@ -34,6 +34,8 @@ android/.idea/
 android/local.properties
 android/*.gpx
 *.apk
+*.jks
+*.keystore
 
 # 자동 생성 파일
 __pycache__/

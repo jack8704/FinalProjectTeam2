@@ -1,8 +1,6 @@
 """
 STEP 4. 검색 품질 평가 (Hit@k, MRR) + 기법별 효과 비교(ablation)
 
-"수업에서 배운 기법을 다 넣었다"가 아니라 "넣어서 몇 %p 올랐다/떨어져서 뺐다"를 보여주는 스크립트.
-
 실행:
   python step4_eval.py                     (개발셋, Pinecone 키 있으면 Dense 구성까지)
   python step4_eval.py --holdout           (홀드아웃 = 최종 성적, 이걸 보고 튜닝하면 안 됨)
@@ -11,7 +9,7 @@ STEP 4. 검색 품질 평가 (Hit@k, MRR) + 기법별 효과 비교(ablation)
   python step4_eval.py --llm-norm          (LLM 질의 표준화 구성 추가 — 서버 LLM 키 필요, 문항 수만큼 호출)
   python step4_eval.py --show-fails        (마지막 구성의 실패 질문 출력)
 
-결과는 eval/results.csv에 누적 저장 (임베딩 공급자 포함) → 발표 자료 비교표로 사용
+결과는 eval/results.csv에 누적 저장 (임베딩 공급자 포함)
 """
 import argparse
 import csv
